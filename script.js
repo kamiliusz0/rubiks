@@ -136,10 +136,16 @@ function generateKociembaString(results) {
 
 // Główna pętla renderowania
 function render() {
-    if (!isScanning) {
-        ctx.drawImage(video, 0, 0, width, height);
-        drawGrid();
-    }
+    // Wyczyść canvas
+    ctx.clearRect(0, 0, width, height);
+
+    // Narysuj obraz z kamery
+    ctx.drawImage(video, 0, 0, width, height);
+
+    // Narysuj siatkę
+    drawGrid();
+
+    // Kontynuuj renderowanie
     requestAnimationFrame(render);
 }
 
@@ -148,7 +154,8 @@ scanButton.addEventListener('click', () => {
     if (isScanning) return; // Zapobiegaj wielokrotnemu skanowaniu
 
     isScanning = true;
-    ctx.drawImage(video, 0, 0, width, height);
+
+    // Wykryj kolory z bieżącego obrazu
     const colors = scanColors();
     const rubikColors = colors.map(row => row.map(mapToRubikColors));
     const currentFace = faces[currentFaceIndex];
@@ -176,5 +183,4 @@ scanButton.addEventListener('click', () => {
 
 // Inicjalizacja
 startCamera();
-drawGrid();
 render();
