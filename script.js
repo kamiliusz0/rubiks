@@ -33,7 +33,7 @@ let remainingScans = 6, results = {}, isScanning = false;
 
 
 /* ====== Konfiguracja GitHub (dopisz swoje dane) ====== */
-const GH_TOKEN   = "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";      // UWAGA na upublicznienie
+const GH_TOKEN   = "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";      // UWAGA na upublicznienie
 const REPO_OWNER = "kamiliusz0";        // np. "janKowalski"
 const REPO_NAME  = "rubiks";       // np. "rubic-cube"
 const FILE_PATH  = "cube_state.json"; // ścieżka w repo
