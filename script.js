@@ -246,6 +246,8 @@ async function saveFileToGitHub(jsonStr) {
       if (r.ok) {
         const d = await r.json();
         sha = d.sha;
+      } else {
+        console.error("Błąd podczas pobierania sha:", r.statusText);
       }
     } catch (error) {
       console.error("Błąd podczas pobierania sha:", error);
@@ -277,7 +279,6 @@ async function saveFileToGitHub(jsonStr) {
     throw error;
   }
 }
-
 // 11. Start
 startCamera();
 render();
