@@ -97,9 +97,9 @@ function getAverageColor(imageData) {
 // Mapowanie kolorów na litery zgodnie z algorytmem Kociemby (zwiększona tolerancja)
 function mapToKociembaLetter(color) {
     const rubikColors = {
-        "czerwony": { letter: "F", rgb: [255, 0, 0], tolerance: 100 },
+        "czerwony": { letter: "F", rgb: [255, 0, 0], tolerance: 10 },
         "zielony": { letter: "R", rgb: [0, 255, 0], tolerance: 100 },
-        "niebieski": { letter: "L", rgb: [0, 0, 255], tolerance: 100 },
+        "niebieski": { letter: "L", rgb: [0, 0, 255], tolerance: 50 },
         "pomarańczowy": { letter: "B", rgb: [255, 165, 0], tolerance: 50 },
         "żółty": { letter: "U", rgb: [255, 255, 0], tolerance: 50 },
         "biały": { letter: "D", rgb: [255, 255, 255], tolerance: 100 }
