@@ -28,7 +28,7 @@ video, canvas {
 }
 
 canvas {
-    pointer-events: none; /* Pozwala na interakcję z wideo pod spodem */
+    pointer-events: none;
 }
 
 button {
