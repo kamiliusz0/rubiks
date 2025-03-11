@@ -29,6 +29,7 @@ const faces = [
 
 let currentFaceIndex = 0;
 let results = {};
+let isScanning = false;
 
 // Uruchomienie kamery (głównej)
 async function startCamera() {
@@ -118,8 +119,35 @@ function mapToRubikColors(color) {
     return matchedColor;
 }
 
+// Generowanie ciągu dla algorytmu Kociemby
+function generateKociembaString(results) {
+    const order = ["czerwony", "zielony", "niebieski", "pomarańczowy", "żółty", "biały"];
+    let kociembaString = "";
+    for (const face of order) {
+        const colors = results[face];
+        for (let y = 0; y < gridSize; y++) {
+            for (let x = 0; x < gridSize; x++) {
+                kociembaString += colors[y][x][0]; // Pierwsza litera koloru
+            }
+        }
+    }
+    return kociembaString;
+}
+
+// Główna pętla renderowania
+function render() {
+    if (!isScanning) {
+        ctx.drawImage(video, 0, 0, width, height);
+        drawGrid();
+    }
+    requestAnimationFrame(render);
+}
+
 // Obsługa przycisku "Skanuj"
 scanButton.addEventListener('click', () => {
+    if (isScanning) return; // Zapobiegaj wielokrotnemu skanowaniu
+
+    isScanning = true;
     ctx.drawImage(video, 0, 0, width, height);
     const colors = scanColors();
     const rubikColors = colors.map(row => row.map(mapToRubikColors));
@@ -142,23 +170,11 @@ scanButton.addEventListener('click', () => {
         const resultString = generateKociembaString(results);
         colorOutput.innerHTML += `<h2>Wynik dla algorytmu Kociemby:</h2><pre>${resultString}</pre>`;
     }
-});
 
-// Generowanie ciągu dla algorytmu Kociemby
-function generateKociembaString(results) {
-    const order = ["czerwony", "zielony", "niebieski", "pomarańczowy", "żółty", "biały"];
-    let kociembaString = "";
-    for (const face of order) {
-        const colors = results[face];
-        for (let y = 0; y < gridSize; y++) {
-            for (let x = 0; x < gridSize; x++) {
-                kociembaString += colors[y][x][0]; // Pierwsza litera koloru
-            }
-        }
-    }
-    return kociembaString;
-}
+    isScanning = false;
+});
 
 // Inicjalizacja
 startCamera();
 drawGrid();
+render();
