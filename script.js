@@ -99,7 +99,7 @@ function mapToKociembaLetter(hsl) {
     const [h, s, l] = hsl;
 
     // **Biały** – wysoka jasność i niskie nasycenie
-    if (l > 85 && s < 20) return "D"; 
+    if (l > 80 && s < 30) return "D"; 
 
     // **Żółty** – odcień 40-70, ale nie za jasny i nie za mało nasycony
     if (h >= 40 && h <= 70 && l < 85) return "U"; 
