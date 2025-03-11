@@ -85,20 +85,41 @@ function getDominantColor(imageData) {
         b += imageData[i + 2];
     }
     const count = imageData.length / 4;
-    return identifyColor(r / count, g / count, b / count);
+    return identifyColor(Math.round(r / count), Math.round(g / count), Math.round(b / count));
 }
 
 // Konwersja RGB na HSL i identyfikacja koloru
 function identifyColor(r, g, b) {
-    [h, s, l] = rgbToHsl(r, g, b);
+    const [h, s, l] = rgbToHsl(r, g, b);
     if (s < 0.2 && l > 0.85) return "D";
     if (s < 0.2 && l < 0.15) return "X";
-    if (h >= 45 && h < 70) return "U";
+    if (h >= 50 && h < 70) return "U";
     if (h >= 0 && h < 15 || h >= 345) return "F";
     if (h >= 15 && h < 45) return "B";
     if (h >= 70 && h < 170) return "R";
     if (h >= 170 && h < 260) return "L";
     return "?";
+}
+
+// Konwersja RGB na HSL
+function rgbToHsl(r, g, b) {
+    r /= 255, g /= 255, b /= 255;
+    let max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+
+    if (max === min) {
+        h = s = 0;
+    } else {
+        let d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+        }
+        h *= 60;
+    }
+    return [h, s, l];
 }
 
 // Generowanie wyniku dla algorytmu Kociemby
@@ -153,4 +174,4 @@ scanButton.addEventListener('click', () => {
 
 // Inicjalizacja
 startCamera();
-render();
+drawGrid();
