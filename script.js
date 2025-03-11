@@ -115,15 +115,16 @@ function mapToKociembaLetter(hsl) {
     // **Czerwony** – odcień w zakresie 0-15 i 345-360 (unikając pomarańczowego)
     if ((h >= 0 && h <= 15) || (h >= 345 && h <= 360)) return "F"; 
 
-    // **Pomarańczowy** – odcień 15-40 (węższy zakres, aby nie pokrywał się z czerwonym)
+    // **Pomarańczowy** – odcień 15-40
     if (h > 15 && h <= 40) return "B"; 
 
     // **Niebieski** – 200-260
     if (h >= 200 && h <= 260) return "L"; 
 
-    // Wszystkie inne kolory traktuj jako białe
+    // Wszelkie inne barwy (spoza ustalonych zakresów) traktuj jako biały
     return "D"; 
 }
+
 
 // Generowanie wyniku dla algorytmu Kociemby
 function generateKociembaString(results) {
