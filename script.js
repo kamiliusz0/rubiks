@@ -121,9 +121,9 @@ function mapToKociembaLetter(hsl) {
     // **Niebieski** – 200-260
     if (h >= 200 && h <= 260) return "L"; 
 
-    return "?"; // Nieznany kolor
+    // Wszystkie inne kolory traktuj jako białe
+    return "D"; 
 }
-
 
 // Generowanie wyniku dla algorytmu Kociemby
 function generateKociembaString(results) {
