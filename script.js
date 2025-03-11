@@ -117,7 +117,7 @@ function scanColors() {
 
       // Oblicz średnią wartość koloru w tym fragmencie (R, G, B)
       let totalR = 0, totalG = 0, totalB = 0;
-      const numPixels = 20 * 20;
+      const numPixels = 15 * 15;
       for (let i = 0; i < imageData.length; i += 4) {
         totalR += imageData[i + 0];
         totalG += imageData[i + 1];
