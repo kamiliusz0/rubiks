@@ -100,15 +100,26 @@ function rgbToHsl(r, g, b) {
     return [h * 360, s * 100, l * 100]; // Odcień w stopniach, nasycenie i jasność w procentach
 }
 
-// Wykrywanie koloru na podstawie HSL
-function detectColor(h, s, l) {
-    if (s <= 10 && l >= 90) return "D"; // Biały
-    if (h >= 40 && h <= 70) return "U"; // Żółty
-    if (h >= 70 && h <= 160) return "R"; // Zielony
-    if ((h >= 0 && h <= 20) || (h >= 340 && h <= 360)) return "F"; // Czerwony
-    if (h >= 200 && h <= 260) return "L"; // Niebieski
-    if (h >= 20 && h <= 40) return "B"; // Pomarańczowy
-    return "?"; // Nieznany kolor
+function mapToKociembaLetter(hsl) {
+    const [h, s, l] = hsl;
+
+    // **Czerwony** – odcień 0-15 i 345-360
+    if ((h >= 0 && h <= 15) || (h >= 345 && h <= 360)) return "F"; 
+
+    // **Pomarańczowy** – odcień 15-40
+    if (h > 15 && h <= 40) return "B"; 
+
+    // **Żółty** – odcień 45-70, musi mieć wysokie nasycenie
+    if (h >= 45 && h <= 70 && s > 30) return "U"; 
+
+    // **Zielony** – odcień 80-160
+    if (h >= 80 && h <= 160 && s > 30) return "R"; 
+
+    // **Niebieski** – odcień 200-260
+    if (h >= 200 && h <= 260 && s > 30) return "L"; 
+
+    // **Każdy inny kolor = biały**
+    return "D"; 
 }
 
 // Mapowanie HSL na litery zgodnie z algorytmem Kociemby
