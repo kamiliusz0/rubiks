@@ -100,8 +100,8 @@ function mapToKociembaLetter(color) {
         "czerwony": { letter: "F", rgb: [255, 0, 0], tolerance: 100 },
         "zielony": { letter: "R", rgb: [0, 255, 0], tolerance: 100 },
         "niebieski": { letter: "L", rgb: [0, 0, 255], tolerance: 100 },
-        "pomarańczowy": { letter: "B", rgb: [255, 165, 0], tolerance: 150 },
-        "żółty": { letter: "U", rgb: [255, 255, 0], tolerance: 150 },
+        "pomarańczowy": { letter: "B", rgb: [255, 165, 0], tolerance: 50 },
+        "żółty": { letter: "U", rgb: [255, 255, 0], tolerance: 50 },
         "biały": { letter: "D", rgb: [255, 255, 255], tolerance: 100 }
     };
     for (const [name, data] of Object.entries(rubikColors)) {
