@@ -91,42 +91,36 @@ function getDominantColor(imageData) {
 // Konwersja RGB na HSL i identyfikacja koloru
 function identifyColor(r, g, b) {
     [h, s, l] = rgbToHsl(r, g, b);
-    if (s < 0.2 && l > 0.85) return "D"; // Biały
-    if (s < 0.2 && l < 0.15) return "X"; // Nieznany (czarny lub cień)
-    if (h >= 45 && h < 70) return "U";   // Żółty
-    if (h >= 0 && h < 15 || h >= 345) return "F";  // Czerwony
-    if (h >= 15 && h < 45) return "B";  // Pomarańczowy
-    if (h >= 70 && h < 170) return "R"; // Zielony
-    if (h >= 170 && h < 260) return "L"; // Niebieski
-    return "?"; // Nieznany
+    if (s < 0.2 && l > 0.85) return "D";
+    if (s < 0.2 && l < 0.15) return "X";
+    if (h >= 45 && h < 70) return "U";
+    if (h >= 0 && h < 15 || h >= 345) return "F";
+    if (h >= 15 && h < 45) return "B";
+    if (h >= 70 && h < 170) return "R";
+    if (h >= 170 && h < 260) return "L";
+    return "?";
 }
 
-// Konwersja RGB na HSL
-function rgbToHsl(r, g, b) {
-    r /= 255, g /= 255, b /= 255;
-    let max = Math.max(r, g, b), min = Math.min(r, g, b);
-    let h, s, l = (max + min) / 2;
-    if (max === min) {
-        h = s = 0;
-    } else {
-        let d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-        switch (max) {
-            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-            case g: h = (b - r) / d + 2; break;
-            case b: h = (r - g) / d + 4; break;
+// Generowanie wyniku dla algorytmu Kociemby
+function generateKociembaString(results) {
+    let kociembaString = "";
+    for (const face of kociembaOrder) {
+        if (!results[face]) {
+            throw new Error(`Brak zeskanowanej ściany: ${faceLetters[face]}`);
         }
-        h *= 60;
+        for (let y = 0; y < gridSize; y++) {
+            for (let x = 0; x < gridSize; x++) {
+                kociembaString += results[face][y][x];
+            }
+        }
     }
-    return [h, s, l];
+    return kociembaString;
 }
 
-// Renderowanie kamery
-function render() {
-    ctx.clearRect(0, 0, width, height);
-    ctx.drawImage(video, 0, 0, width, height);
-    drawGrid();
-    requestAnimationFrame(render);
+// Aktualizacja wyświetlanych ścian
+function updateScannedFaces() {
+    const scannedFaces = Object.keys(results).map(face => faceLetters[face]).join(', ');
+    colorOutput.innerHTML = `<h2>Zeskanowane ściany:</h2><p>${scannedFaces}</p>`;
 }
 
 // Obsługa skanowania
@@ -144,6 +138,16 @@ scanButton.addEventListener('click', () => {
     results[centerColor] = colors;
     remainingScans--;
     instruction.textContent = `Pozostało do zeskanowania: ${remainingScans} ścian.`;
+    updateScannedFaces();
+
+    if (remainingScans === 0) {
+        try {
+            const resultString = generateKociembaString(results);
+            colorOutput.innerHTML += `<h2>Wynik dla algorytmu Kociemby:</h2><pre>${resultString}</pre>`;
+        } catch (error) {
+            colorOutput.innerHTML = `<h2>Błąd:</h2><pre>${error.message}</pre>`;
+        }
+    }
     isScanning = false;
 });
 
