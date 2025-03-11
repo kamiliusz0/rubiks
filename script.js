@@ -20,7 +20,7 @@ canvas.height = height;
 // Kolejność ścian zgodnie z algorytmem Kociemby
 const kociembaOrder = ["U", "R", "F", "D", "L", "B"];
 
-// Mapowanie liter algorytmu Kociemby na nazwy kolorów (dla wyświetlania)
+// Nazwy kolorów (dla wyświetlania) przypisane literom
 const faceLetters = {
   "U": "żółty",
   "R": "zielony",
@@ -30,34 +30,27 @@ const faceLetters = {
   "B": "pomarańczowy"
 };
 
-// Wzorcowe kolory (w przestrzeni HSL) dla sześciu barw kostki Rubika
-// Uwaga: wartości można korygować w zależności od typu kostki i oświetlenia.
-// - h (odcień) w stopniach [0..360]
-// - s (nasycenie) w procentach [0..100]
-// - l (jasność) w procentach [0..100]
+/*
+  Na podstawie Twoich pomiarów:
+  - Biały (D): (94.9, 1.4, 66.0)
+  - Pomarańczowy (B): 2 próbki => średnia (23.4, 98.4, 43.5)
+  - Zielony (R): 2 próbki => średnia (121.8, 66.8, 47.4)
+  - Czerwony (F): (357.9, 78.9, 43.8)
+  - Żółty (U): (55.2, 100.0, 40.1)
+  - Niebieski (L): (204.5, 93.9, 39.8)
+*/
 const referenceColors = [
-  // Biały
-  { letter: 'D', name: 'biały',       hsl: [  0,   0,  95] }, 
-  // Żółty
-  { letter: 'U', name: 'żółty',      hsl: [ 60, 100,  50] },
-  // Zielony
-  { letter: 'R', name: 'zielony',    hsl: [120, 100,  40] },
-  // Czerwony
-  { letter: 'F', name: 'czerwony',   hsl: [  0, 100,  50] },
-  // Niebieski
-  { letter: 'L', name: 'niebieski',  hsl: [240, 100,  40] },
-  // Pomarańczowy
-  { letter: 'B', name: 'pomarańczowy', hsl: [ 30, 100,  50] }
+  { letter: 'D', name: 'biały',         hsl: [ 94.9,  1.4, 66.0 ] },
+  { letter: 'B', name: 'pomarańczowy', hsl: [ 23.4, 98.4, 43.5 ] },
+  { letter: 'R', name: 'zielony',      hsl: [121.8, 66.8, 47.4 ] },
+  { letter: 'F', name: 'czerwony',     hsl: [357.9, 78.9, 43.8 ] },
+  { letter: 'U', name: 'żółty',        hsl: [ 55.2,100.0, 40.1 ] },
+  { letter: 'L', name: 'niebieski',    hsl: [204.5, 93.9, 39.8 ] }
 ];
 
-// Liczba pozostałych ścian do zeskanowania
-let remainingScans = 6;
-
-// Wyniki skanowania
-let results = {}; 
-
-// Flaga oznaczająca czy trwa właśnie skanowanie
-let isScanning = false;
+let remainingScans = 6; // Liczba pozostałych ścian do zeskanowania
+let results = {};       // Wyniki skanowania
+let isScanning = false; // Flaga oznaczająca czy trwa właśnie skanowanie
 
 
 /* ================================================
@@ -99,25 +92,26 @@ function drawGrid() {
 
 /* ================================================
    3. SKANOWANIE KOLORÓW
-   - Pobiera fragment 10x10 px ze środka każdej komórki
-   - Przekształca je na HSL
    ================================================ */
 function scanColors() {
   const colors = [];
+  // Skanujemy 3x3 - dla każdej "komórki" pobieramy np. 15x15 px (możesz zmienić)
+  const sampleSize = 10;
+
   for (let y = 0; y < gridSize; y++) {
     const row = [];
     for (let x = 0; x < gridSize; x++) {
 
-      // Środek każdej komórki (np. 10x10 px)
-      const startX = margin + x * cellSize + cellSize / 2 - 5;
-      const startY = margin + y * cellSize + cellSize / 2 - 5;
+      // Oblicz lewy górny róg obszaru do pobrania
+      const startX = margin + x * cellSize + cellSize / 2 - sampleSize/2;
+      const startY = margin + y * cellSize + cellSize / 2 - sampleSize/2;
 
       // Pobierz obrazek (fragment)
-      const imageData = ctx.getImageData(startX, startY, 10, 10).data;
+      const imageData = ctx.getImageData(startX, startY, sampleSize, sampleSize).data;
 
       // Oblicz średnią wartość koloru w tym fragmencie (R, G, B)
       let totalR = 0, totalG = 0, totalB = 0;
-      const numPixels = 15 * 15;
+      const numPixels = sampleSize * sampleSize;
       for (let i = 0; i < imageData.length; i += 4) {
         totalR += imageData[i + 0];
         totalG += imageData[i + 1];
@@ -155,8 +149,7 @@ function rgbToHsl(r, g, b) {
     s = 0;
   } else {
     const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-
+    s = (l > 0.5) ? d / (2 - max - min) : d / (max + min);
     switch (max) {
       case r:
         h = (g - b) / d + (g < b ? 6 : 0);
@@ -173,21 +166,16 @@ function rgbToHsl(r, g, b) {
 
   // Przeskaluj na bardziej czytelne wartości
   return [
-    h * 360,       // Zakres 0..360
-    s * 100,       // Zakres 0..100
-    l * 100        // Zakres 0..100
+    h * 360,   // Zakres 0..360
+    s * 100,   // Zakres 0..100
+    l * 100    // Zakres 0..100
   ];
 }
 
 
 /* ================================================
    5. OBLICZANIE NAJBLIŻSZEGO KOLORU (WZORCE HSL)
-   ================================================
-   - Dla każdego wczytanego HSL wylicz dystans do
-     zdefiniowanych barw i wybierz tę z najmniejszym
-     dystansem (najbliższą).
    ================================================ */
-
 function mapToKociembaLetter(hsl) {
   let minDistance = Infinity;
   let bestLetter = 'D'; // Domyślnie biały, gdyby coś poszło nie tak
@@ -202,10 +190,9 @@ function mapToKociembaLetter(hsl) {
   return bestLetter;
 }
 
-// Funkcja licząca "odległość" między dwoma kolorami HSL
-// Uwzględniamy okrężność H (np. 350° i 10° są blisko).
+// Funkcja licząca różnicę (dystans) między dwoma kolorami HSL
 function getHslDistance([h1, s1, l1], [h2, s2, l2]) {
-  // Różnica odcienia (z uwzględnieniem 360°)
+  // Odcień (hue) z uwzględnieniem "zawinięcia" wokół 360
   let dh = Math.abs(h1 - h2);
   if (dh > 180) dh = 360 - dh;
 
@@ -213,10 +200,8 @@ function getHslDistance([h1, s1, l1], [h2, s2, l2]) {
   const ds = Math.abs(s1 - s2);
   const dl = Math.abs(l1 - l2);
 
-  // Zwróć np. kwadrat dystansu
-  // (nie ma to wielkiego znaczenia, czy kwadrat czy pierwiastek –
-  //  ważne, by być spójnym w porównywaniu).
-  return dh * dh + ds * ds + dl * dl;
+  // Dystans (np. kwadrat euklidesowy)
+  return dh*dh + ds*ds + dl*dl;
 }
 
 
@@ -246,7 +231,6 @@ function updateScannedFaces() {
   const scannedFaces = Object.keys(results)
     .map(face => faceLetters[face])
     .join(', ');
-
   colorOutput.innerHTML = `<h2>Zeskanowane ściany:</h2><p>${scannedFaces}</p>`;
 }
 
