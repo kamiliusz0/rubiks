@@ -1,5 +1,5 @@
 // Endpoint API (zmień na swój URL backendu)
-const backendUrl = "https://rubik-cube-backend.onrender.com/solve";
+const backendUrl = "https://rubik-cube-backend-zh6g.onrender.com/solve";
 // Elementy DOM
 const video = document.getElementById('camera');
 const canvas = document.getElementById('grid');
