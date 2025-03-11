@@ -224,24 +224,59 @@ scanButton.addEventListener('click',()=>{
 });
 
 // 10b. Funkcja – minimalna wersja do zapisu w GitHub
-async function saveFileToGitHub(jsonStr){
-  const base64Content=btoa(jsonStr);
-  const url=`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
-  const headers={
-    "Authorization":`Bearer ${GH_TOKEN}`,
-    "Accept":"application/vnd.github+json",
-    "Content-Type":"application/json"
-  };
-  // Spróbuj pobrać sha
-  let sha=null, r=await fetch(url,{method:'GET',headers});
-  if(r.ok){ let d=await r.json(); sha=d.sha; }
-  // PUT
-  const body={ message:"Update", content:base64Content };
-  if(sha) body.sha=sha;
-  let r2=await fetch(url,{method:'PUT',headers,body:JSON.stringify(body)});
-  if(!r2.ok) throw new Error("PUT Error:"+r2.statusText);
-}
+async function saveFileToGitHub(jsonStr) {
+  try {
+    // Zakoduj zawartość JSON w base64
+    const base64Content = Buffer.from(jsonStr).toString('base64');
 
+    // URL do pliku w repozytorium GitHub
+    const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+
+    // Nagłówki z tokenem GitHub
+    const headers = {
+      "Authorization": `Bearer ${GH_TOKEN}`,
+      "Accept": "application/vnd.github+json",
+      "Content-Type": "application/json"
+    };
+
+    // Spróbuj pobrać sha istniejącego pliku
+    let sha = null;
+    try {
+      const r = await fetch(url, { method: 'GET', headers });
+      if (r.ok) {
+        const d = await r.json();
+        sha = d.sha;
+      }
+    } catch (error) {
+      console.error("Błąd podczas pobierania sha:", error);
+    }
+
+    // Przygotuj dane do wysłania
+    const body = {
+      message: "Update cube state",
+      content: base64Content
+    };
+    if (sha) body.sha = sha;
+
+    // Wyślij żądanie PUT
+    const r2 = await fetch(url, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(body)
+    });
+
+    // Sprawdź odpowiedź
+    if (!r2.ok) {
+      const errorDetails = await r2.json();
+      throw new Error(`PUT Error: ${r2.statusText} - ${errorDetails.message}`);
+    }
+
+    console.log("Plik zapisany pomyślnie!");
+  } catch (error) {
+    console.error("Błąd podczas zapisywania pliku:", error);
+    throw error;
+  }
+}
 
 // 11. Start
 startCamera();
