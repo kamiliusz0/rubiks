@@ -109,7 +109,7 @@ function mapToKociembaLetter(color) {
         "czerwony": [255, 0, 0],
         "zielony": [0, 255, 0],
         "niebieski": [0, 0, 255],
-        "pomarańczowy": [255, 165, 0],
+        "pomarańczowy": [255, 150, 0],
         "żółty": [255, 255, 0],
         "biały": [255, 255, 255]
     })) {
