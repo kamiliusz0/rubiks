@@ -30,15 +30,7 @@ const faceLetters = {
   "B": "pomarańczowy"
 };
 
-/*
-  Na podstawie Twoich pomiarów:
-  - Biały (D): (94.9, 1.4, 66.0)
-  - Pomarańczowy (B): 2 próbki => średnia (23.4, 98.4, 43.5)
-  - Zielony (R): 2 próbki => średnia (121.8, 66.8, 47.4)
-  - Czerwony (F): (357.9, 78.9, 43.8)
-  - Żółty (U): (55.2, 100.0, 40.1)
-  - Niebieski (L): (204.5, 93.9, 39.8)
-*/
+// Twoje wzorcowe kolory (w przestrzeni HSL)
 const referenceColors = [
   { letter: 'D', name: 'biały',         hsl: [ 94.9,  1.4, 66.0 ] },
   { letter: 'B', name: 'pomarańczowy', hsl: [ 23.4, 98.4, 43.5 ] },
@@ -58,7 +50,6 @@ let isScanning = false; // Flaga oznaczająca czy trwa właśnie skanowanie
    ================================================ */
 async function startCamera() {
   try {
-    // facingMode: "environment" - stara się używać tylnej kamery (np. w telefonach)
     const constraints = { video: { facingMode: "environment" } };
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
     video.srcObject = stream;
@@ -95,13 +86,12 @@ function drawGrid() {
    ================================================ */
 function scanColors() {
   const colors = [];
-  // Skanujemy 3x3 - dla każdej "komórki" pobieramy np. 15x15 px (możesz zmienić)
+  // Skanujemy 3x3 - dla każdej "komórki" pobieramy np. 10×10 px
   const sampleSize = 10;
 
   for (let y = 0; y < gridSize; y++) {
     const row = [];
     for (let x = 0; x < gridSize; x++) {
-
       // Oblicz lewy górny róg obszaru do pobrania
       const startX = margin + x * cellSize + cellSize / 2 - sampleSize/2;
       const startY = margin + y * cellSize + cellSize / 2 - sampleSize/2;
@@ -113,7 +103,7 @@ function scanColors() {
       let totalR = 0, totalG = 0, totalB = 0;
       const numPixels = sampleSize * sampleSize;
       for (let i = 0; i < imageData.length; i += 4) {
-        totalR += imageData[i + 0];
+        totalR += imageData[i];
         totalG += imageData[i + 1];
         totalB += imageData[i + 2];
       }
@@ -122,8 +112,8 @@ function scanColors() {
       const avgB = totalB / numPixels;
 
       // Konwertuj średnie RGB na HSL
-      const hsl = rgbToHsl(avgR, avgG, avgB);
-      row.push(hsl);
+      const hslVal = rgbToHsl(avgR, avgG, avgB);
+      row.push(hslVal);
     }
     colors.push(row);
   }
@@ -164,12 +154,8 @@ function rgbToHsl(r, g, b) {
     h /= 6;
   }
 
-  // Przeskaluj na bardziej czytelne wartości
-  return [
-    h * 360,   // Zakres 0..360
-    s * 100,   // Zakres 0..100
-    l * 100    // Zakres 0..100
-  ];
+  // Skala: h: 0..360, s: 0..100, l: 0..100
+  return [ h * 360, s * 100, l * 100 ];
 }
 
 
@@ -178,7 +164,7 @@ function rgbToHsl(r, g, b) {
    ================================================ */
 function mapToKociembaLetter(hsl) {
   let minDistance = Infinity;
-  let bestLetter = 'D'; // Domyślnie biały, gdyby coś poszło nie tak
+  let bestLetter = 'D'; // Domyślnie biały
 
   for (const refColor of referenceColors) {
     const dist = getHslDistance(hsl, refColor.hsl);
@@ -190,17 +176,12 @@ function mapToKociembaLetter(hsl) {
   return bestLetter;
 }
 
-// Funkcja licząca różnicę (dystans) między dwoma kolorami HSL
+// Liczy odległość między dwoma kolorami HSL
 function getHslDistance([h1, s1, l1], [h2, s2, l2]) {
-  // Odcień (hue) z uwzględnieniem "zawinięcia" wokół 360
   let dh = Math.abs(h1 - h2);
   if (dh > 180) dh = 360 - dh;
-
-  // Różnica nasycenia i jasności
   const ds = Math.abs(s1 - s2);
   const dl = Math.abs(l1 - l2);
-
-  // Dystans (np. kwadrat euklidesowy)
   return dh*dh + ds*ds + dl*dl;
 }
 
@@ -231,6 +212,7 @@ function updateScannedFaces() {
   const scannedFaces = Object.keys(results)
     .map(face => faceLetters[face])
     .join(', ');
+
   colorOutput.innerHTML = `<h2>Zeskanowane ściany:</h2><p>${scannedFaces}</p>`;
 }
 
@@ -254,7 +236,67 @@ function render() {
 
 
 /* ================================================
-   9. OBSŁUGA PRZYCISKU "SKANUJ"
+   9. FUNKCJA DO WYŚWIETLANIA 9-KOLOROWEJ SIATKI
+      PO OSTATNIM SKANOWANIU
+   ================================================ */
+function displayScannedFace(faceLetter, kociembaLetters) {
+  // Stworzymy mały nagłówek + siatkę 3x3 z kwadratami w kolorach
+  const container = document.createElement('div');
+  container.style.margin = '10px 0';
+
+  // Informacja o tym, jaką ścianę zeskanowano
+  const title = document.createElement('h3');
+  title.textContent = `Ostatnio zeskanowana ściana: ${faceLetters[faceLetter]} (${faceLetter})`;
+  container.appendChild(title);
+
+  // Kontener na kwadraty
+  const gridDiv = document.createElement('div');
+  gridDiv.style.display = 'grid';
+  gridDiv.style.gridTemplateColumns = 'repeat(3, 40px)';
+  gridDiv.style.gridTemplateRows = 'repeat(3, 40px)';
+  gridDiv.style.gap = '2px';
+
+  // Uzupełniamy 9 pól
+  for (let y = 0; y < 3; y++) {
+    for (let x = 0; x < 3; x++) {
+      const letter = kociembaLetters[y][x];  // np. 'U', 'R', ...
+      const cell = document.createElement('div');
+      cell.style.width = '40px';
+      cell.style.height = '40px';
+      cell.style.border = '1px solid #333';
+      cell.style.backgroundColor = mapLetterToColor(letter);
+
+      // Dodatkowo można wstawić literkę w środku:
+      cell.style.display = 'flex';
+      cell.style.justifyContent = 'center';
+      cell.style.alignItems = 'center';
+      cell.style.fontWeight = 'bold';
+      cell.textContent = letter; 
+
+      gridDiv.appendChild(cell);
+    }
+  }
+
+  container.appendChild(gridDiv);
+  colorOutput.appendChild(container);
+}
+
+// Przypisanie litery do CSS-owej nazwy koloru (dowolne)
+function mapLetterToColor(letter) {
+  switch(letter) {
+    case 'U': return 'yellow';      // żółty
+    case 'R': return 'green';       // zielony
+    case 'F': return 'red';         // czerwony
+    case 'D': return 'white';       // biały
+    case 'L': return 'blue';        // niebieski
+    case 'B': return 'orange';      // pomarańczowy
+    default:  return 'gray';        // w razie czego
+  }
+}
+
+
+/* ================================================
+   10. OBSŁUGA PRZYCISKU "SKANUJ"
    ================================================ */
 scanButton.addEventListener('click', () => {
   if (isScanning) return; // Zapobiegaj wielokrotnemu skanowaniu
@@ -267,7 +309,7 @@ scanButton.addEventListener('click', () => {
   const kociembaLetters = hslValues.map(row => row.map(mapToKociembaLetter));
 
   // Określ, która ściana została zeskanowana (na podstawie środkowego kafelka)
-  const centerLetter = kociembaLetters[1][1]; // Środkowy kafelek
+  const centerLetter = kociembaLetters[1][1];
   if (!kociembaOrder.includes(centerLetter)) {
     colorOutput.innerHTML = `<h2>Błąd:</h2><p>Nie rozpoznano koloru środkowego kafelka.</p>`;
     isScanning = false;
@@ -276,6 +318,9 @@ scanButton.addEventListener('click', () => {
 
   // Zapisz wyniki dla tej ściany
   results[centerLetter] = kociembaLetters;
+
+  // Wyświetl małą siatkę 3x3 z kolorami ostatniego skanu
+  displayScannedFace(centerLetter, kociembaLetters);
 
   // Zmniejsz liczbę pozostałych skanów
   remainingScans--;
@@ -308,7 +353,7 @@ scanButton.addEventListener('click', () => {
 
 
 /* ================================================
-   10. INICJALIZACJA: URUCHOMIENIE KAMERY I START
+   11. INICJALIZACJA: URUCHOMIENIE KAMERY I START
    ================================================ */
 startCamera();
 render();
