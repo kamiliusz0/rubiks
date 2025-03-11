@@ -70,16 +70,16 @@ function scanColors() {
             const startX = margin + x * cellSize + cellSize / 2 - 5; // Środek pola (X)
             const startY = margin + y * cellSize + cellSize / 2 - 5; // Środek pola (Y)
             const imageData = ctx.getImageData(startX, startY, 10, 10).data; // Mały obszar (10x10 pikseli)
-            const avgColor = getAverageColor(imageData);
-            row.push(avgColor);
+            const grayValue = getGrayValue(imageData); // Wartość w skali szarości
+            row.push(grayValue);
         }
         colors.push(row);
     }
     return colors;
 }
 
-// Obliczanie średniego koloru
-function getAverageColor(imageData) {
+// Obliczanie wartości w skali szarości
+function getGrayValue(imageData) {
     let r = 0, g = 0, b = 0;
     for (let i = 0; i < imageData.length; i += 4) {
         r += imageData[i];
@@ -87,31 +87,24 @@ function getAverageColor(imageData) {
         b += imageData[i + 2];
     }
     const count = imageData.length / 4;
-    return [
-        Math.round(r / count),
-        Math.round(g / count),
-        Math.round(b / count)
-    ];
+    const gray = Math.round((r + g + b) / (3 * count)); // Średnia wartość szarości
+    return gray;
 }
 
-// Mapowanie kolorów na litery zgodnie z algorytmem Kociemby (zwiększona tolerancja)
-function mapToKociembaLetter(color) {
-    const rubikColors = {
-        "czerwony": { letter: "F", rgb: [255, 0, 0], tolerance: 10 },
-        "zielony": { letter: "R", rgb: [0, 255, 0], tolerance: 10 },
-        "niebieski": { letter: "L", rgb: [0, 0, 255], tolerance: 50 },
-        "pomarańczowy": { letter: "B", rgb: [255, 165, 0], tolerance: 50 },
-        "żółty": { letter: "U", rgb: [255, 255, 0], tolerance: 50 },
-        "biały": { letter: "D", rgb: [255, 255, 255], tolerance: 10 }
+// Mapowanie wartości szarości na litery zgodnie z algorytmem Kociemby
+function mapToKociembaLetter(grayValue) {
+    // Zakresy szarości dla każdego koloru
+    const grayRanges = {
+        "U": { min: 200, max: 255 }, // Żółty (jasny)
+        "D": { min: 200, max: 255 }, // Biały (jasny)
+        "F": { min: 0, max: 100 },   // Czerwony (ciemny)
+        "R": { min: 100, max: 150 }, // Zielony (średni)
+        "L": { min: 50, max: 100 },  // Niebieski (ciemny)
+        "B": { min: 150, max: 200 }  // Pomarańczowy (średni)
     };
-    for (const [name, data] of Object.entries(rubikColors)) {
-        const distance = Math.sqrt(
-            Math.pow(color[0] - data.rgb[0], 2) +
-            Math.pow(color[1] - data.rgb[1], 2) +
-            Math.pow(color[2] - data.rgb[2], 2)
-        );
-        if (distance <= data.tolerance) {
-            return data.letter;
+    for (const [letter, range] of Object.entries(grayRanges)) {
+        if (grayValue >= range.min && grayValue <= range.max) {
+            return letter;
         }
     }
     return "?"; // Nieznany kolor
@@ -161,8 +154,8 @@ scanButton.addEventListener('click', () => {
     isScanning = true;
 
     // Wykryj kolory z bieżącego obrazu
-    const colors = scanColors();
-    const kociembaLetters = colors.map(row => row.map(mapToKociembaLetter));
+    const grayValues = scanColors();
+    const kociembaLetters = grayValues.map(row => row.map(mapToKociembaLetter));
 
     // Określ, która ściana została zeskanowana (na podstawie środkowego kafelka)
     const centerLetter = kociembaLetters[1][1]; // Środkowy kafelek
