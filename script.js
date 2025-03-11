@@ -17,14 +17,14 @@ const ctx = canvas.getContext('2d');
 canvas.width = width;
 canvas.height = height;
 
-// Kolejność skanowania ścian zgodnie z Kociembą
+// Kolejność skanowania ścian
 const faces = [
-    { name: "U", color: "żółty", center: [255, 255, 0] },    // Żółty (Up)
-    { name: "R", color: "zielony", center: [0, 255, 0] },    // Zielony (Right)
-    { name: "F", color: "czerwony", center: [255, 0, 0] },   // Czerwony (Front)
-    { name: "D", color: "biały", center: [255, 255, 255] },  // Biały (Down)
-    { name: "L", color: "niebieski", center: [0, 0, 255] },  // Niebieski (Left)
-    { name: "B", color: "pomarańczowy", center: [255, 165, 0] } // Pomarańczowy (Back)
+    { name: "czerwony", color: "red", letter: "F" },
+    { name: "zielony", color: "green", letter: "R" },
+    { name: "niebieski", color: "blue", letter: "L" },
+    { name: "pomarańczowy", color: "orange", letter: "B" },
+    { name: "żółty", color: "yellow", letter: "U" },
+    { name: "biały", color: "white", letter: "D" }
 ];
 
 let currentFaceIndex = 0;
@@ -60,36 +60,59 @@ function drawGrid() {
     }
 }
 
-// Skanowanie wszystkich pól na ścianie
-function scanFace() {
+// Wykrywanie kolorów w siatce (tylko środek każdego pola)
+function scanColors() {
     const colors = [];
     for (let y = 0; y < gridSize; y++) {
         const row = [];
         for (let x = 0; x < gridSize; x++) {
-            const startX = margin + x * cellSize + cellSize / 2;
-            const startY = margin + y * cellSize + cellSize / 2;
-            const imageData = ctx.getImageData(startX, startY, 1, 1).data; // Pobierz 1 piksel z centrum pola
-            const color = mapToRubikColor([imageData[0], imageData[1], imageData[2]]);
-            row.push(color);
+            const startX = margin + x * cellSize + cellSize / 2 - 5; // Środek pola (X)
+            const startY = margin + y * cellSize + cellSize / 2 - 5; // Środek pola (Y)
+            const imageData = ctx.getImageData(startX, startY, 10, 10).data; // Mały obszar (10x10 pikseli)
+            const avgColor = getAverageColor(imageData);
+            row.push(avgColor);
         }
         colors.push(row);
     }
     return colors;
 }
 
-// Mapowanie kolorów na nazwy
-function mapToRubikColor(color) {
+// Obliczanie średniego koloru
+function getAverageColor(imageData) {
+    let r = 0, g = 0, b = 0;
+    for (let i = 0; i < imageData.length; i += 4) {
+        r += imageData[i];
+        g += imageData[i + 1];
+        b += imageData[i + 2];
+    }
+    const count = imageData.length / 4;
+    return [
+        Math.round(r / count),
+        Math.round(g / count),
+        Math.round(b / count)
+    ];
+}
+
+// Mapowanie kolorów na litery zgodnie z algorytmem Kociemby
+function mapToKociembaLetter(color) {
     const rubikColors = {
+        "czerwony": "F",
+        "zielony": "R",
+        "niebieski": "L",
+        "pomarańczowy": "B",
+        "żółty": "U",
+        "biały": "D"
+    };
+    let minDistance = Infinity;
+    let matchedLetter = "?";
+    for (const [name, rgb] of Object.entries({
         "czerwony": [255, 0, 0],
         "zielony": [0, 255, 0],
         "niebieski": [0, 0, 255],
         "pomarańczowy": [255, 165, 0],
         "żółty": [255, 255, 0],
         "biały": [255, 255, 255]
-    };
-    let minDistance = Infinity;
-    let matchedColor = "nieznany";
-    for (const [name, rgb] of Object.entries(rubikColors)) {
+    })) {
         const distance = Math.sqrt(
             Math.pow(color[0] - rgb[0], 2) +
             Math.pow(color[1] - rgb[1], 2) +
@@ -97,21 +120,21 @@ function mapToRubikColor(color) {
         );
         if (distance < minDistance) {
             minDistance = distance;
-            matchedColor = name;
+            matchedLetter = rubikColors[name];
         }
     }
-    return matchedColor[0].toUpperCase(); // Zwróć pierwszą literę koloru (np. "C" dla czerwonego)
+    return matchedLetter;
 }
 
-// Generowanie ciągu dla algorytmu Kociemby
+// Generowanie wyniku dla algorytmu Kociemby
 function generateKociembaString(results) {
-    const order = ["U", "R", "F", "D", "L", "B"]; // Kolejność ścian
+    const order = ["U", "R", "F", "D", "L", "B"]; // Kolejność ścian w algorytmie Kociemby
     let kociembaString = "";
     for (const face of order) {
         const colors = results[face];
         for (let y = 0; y < gridSize; y++) {
             for (let x = 0; x < gridSize; x++) {
-                kociembaString += colors[y][x]; // Dodaj kolor pola
+                kociembaString += colors[y][x];
             }
         }
     }
@@ -139,14 +162,15 @@ scanButton.addEventListener('click', () => {
 
     isScanning = true;
 
-    // Wykryj kolory na bieżącej ścianie
-    const colors = scanFace();
+    // Wykryj kolory z bieżącego obrazu
+    const colors = scanColors();
+    const kociembaLetters = colors.map(row => row.map(mapToKociembaLetter));
     const currentFace = faces[currentFaceIndex];
-    results[currentFace.name] = colors;
+    results[currentFace.letter] = kociembaLetters;
 
     // Wyświetl wyniki
     colorOutput.innerHTML = `<h2>Wykryte kolory (${currentFace.name}):</h2>` +
-        colors.map(row => row.join(' ')).join('<br>');
+        kociembaLetters.map(row => row.join(' ')).join('<br>');
 
     // Przejdź do następnej ściany
     currentFaceIndex++;
@@ -158,11 +182,11 @@ scanButton.addEventListener('click', () => {
 
         // Generowanie wyniku dla algorytmu Kociemby
         const resultString = generateKociembaString(results);
-        colorOutput.innerHTML += `<h2>Wynik dla algorytmu Kociemby:</h2><pre>${resultString}</pre>`;
+        colorOutput.innerHTML = `<h2>Wynik dla algorytmu Kociemby:</h2><pre>${resultString}</pre>`;
 
-        // Wyłącz kamerę
-        video.srcObject.getTracks().forEach(track => track.stop());
+        // Ukryj kamerę i siatkę
         video.style.display = "none";
+        canvas.style.display = "none";
     }
 
     isScanning = false;
