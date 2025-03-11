@@ -28,14 +28,14 @@ const faceLetters = {
     "B": "pomarańczowy"
 };
 
-let remainingScans = 6; // Liczba pozostałych ścian do zeskanowania
-let results = {}; // Wyniki skanowania
+let remainingScans = 6;
+let results = {};
 let isScanning = false;
 
-// Uruchomienie kamery (głównej)
+// Uruchomienie kamery
 async function startCamera() {
     try {
-        const constraints = { video: { facingMode: "environment" } }; // Główna kamera
+        const constraints = { video: { facingMode: "environment" } };
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
     } catch (error) {
@@ -48,12 +48,10 @@ function drawGrid() {
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 2;
     for (let i = 1; i < gridSize; i++) {
-        // Linie pionowe
         ctx.beginPath();
         ctx.moveTo(margin + i * cellSize, margin);
         ctx.lineTo(margin + i * cellSize, height - margin);
         ctx.stroke();
-        // Linie poziome
         ctx.beginPath();
         ctx.moveTo(margin, margin + i * cellSize);
         ctx.lineTo(width - margin, margin + i * cellSize);
@@ -61,25 +59,25 @@ function drawGrid() {
     }
 }
 
-// Wykrywanie kolorów w siatce (tylko środek każdego pola)
+// Wykrywanie kolorów w siatce
 function scanColors() {
     const colors = [];
     for (let y = 0; y < gridSize; y++) {
         const row = [];
         for (let x = 0; x < gridSize; x++) {
-            const startX = margin + x * cellSize + cellSize / 2 - 5; // Środek pola (X)
-            const startY = margin + y * cellSize + cellSize / 2 - 5; // Środek pola (Y)
-            const imageData = ctx.getImageData(startX, startY, 10, 10).data; // Mały obszar (10x10 pikseli)
-            const grayValue = getGrayValue(imageData); // Wartość w skali szarości
-            row.push(grayValue);
+            const startX = margin + x * cellSize + cellSize / 2;
+            const startY = margin + y * cellSize + cellSize / 2;
+            const imageData = ctx.getImageData(startX, startY, 10, 10).data;
+            const color = getDominantColor(imageData);
+            row.push(color);
         }
         colors.push(row);
     }
     return colors;
 }
 
-// Obliczanie wartości w skali szarości
-function getGrayValue(imageData) {
+// Obliczanie dominującego koloru
+function getDominantColor(imageData) {
     let r = 0, g = 0, b = 0;
     for (let i = 0; i < imageData.length; i += 4) {
         r += imageData[i];
@@ -87,114 +85,68 @@ function getGrayValue(imageData) {
         b += imageData[i + 2];
     }
     const count = imageData.length / 4;
-    const gray = Math.round((r + g + b) / (3 * count)); // Średnia wartość szarości
-    return gray;
+    return identifyColor(r / count, g / count, b / count);
 }
 
-// Mapowanie wartości szarości na litery zgodnie z algorytmem Kociemby
-function mapToKociembaLetter(grayValue) {
-    // Zakresy szarości dla każdego koloru
-    const grayRanges = {
-        "U": { min: 200, max: 255 }, // Żółty (jasny)
-        "D": { min: 200, max: 255 }, // Biały (jasny)
-        "F": { min: 0, max: 100 },   // Czerwony (ciemny)
-        "R": { min: 100, max: 150 }, // Zielony (średni)
-        "L": { min: 50, max: 100 },  // Niebieski (ciemny)
-        "B": { min: 150, max: 200 }  // Pomarańczowy (średni)
-    };
-    for (const [letter, range] of Object.entries(grayRanges)) {
-        if (grayValue >= range.min && grayValue <= range.max) {
-            return letter;
+// Konwersja RGB na HSL i identyfikacja koloru
+function identifyColor(r, g, b) {
+    [h, s, l] = rgbToHsl(r, g, b);
+    if (s < 0.2 && l > 0.85) return "D"; // Biały
+    if (s < 0.2 && l < 0.15) return "X"; // Nieznany (czarny lub cień)
+    if (h >= 45 && h < 70) return "U";   // Żółty
+    if (h >= 0 && h < 15 || h >= 345) return "F";  // Czerwony
+    if (h >= 15 && h < 45) return "B";  // Pomarańczowy
+    if (h >= 70 && h < 170) return "R"; // Zielony
+    if (h >= 170 && h < 260) return "L"; // Niebieski
+    return "?"; // Nieznany
+}
+
+// Konwersja RGB na HSL
+function rgbToHsl(r, g, b) {
+    r /= 255, g /= 255, b /= 255;
+    let max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    if (max === min) {
+        h = s = 0;
+    } else {
+        let d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
         }
+        h *= 60;
     }
-    return "?"; // Nieznany kolor
+    return [h, s, l];
 }
 
-// Generowanie wyniku dla algorytmu Kociemby
-function generateKociembaString(results) {
-    let kociembaString = "";
-    for (const face of kociembaOrder) {
-        if (!results[face]) {
-            throw new Error(`Brak zeskanowanej ściany: ${faceLetters[face]}`);
-        }
-        for (let y = 0; y < gridSize; y++) {
-            for (let x = 0; x < gridSize; x++) {
-                kociembaString += results[face][y][x];
-            }
-        }
-    }
-    return kociembaString;
-}
-
-// Wyświetlanie zeskanowanych ścian
-function updateScannedFaces() {
-    const scannedFaces = Object.keys(results).map(face => faceLetters[face]).join(', ');
-    colorOutput.innerHTML = `<h2>Zeskanowane ściany:</h2><p>${scannedFaces}</p>`;
-}
-
-// Główna pętla renderowania
+// Renderowanie kamery
 function render() {
-    // Wyczyść canvas
     ctx.clearRect(0, 0, width, height);
-
-    // Narysuj obraz z kamery
     ctx.drawImage(video, 0, 0, width, height);
-
-    // Narysuj siatkę
     drawGrid();
-
-    // Kontynuuj renderowanie
     requestAnimationFrame(render);
 }
 
-// Obsługa przycisku "Skanuj"
+// Obsługa skanowania
 scanButton.addEventListener('click', () => {
-    if (isScanning) return; // Zapobiegaj wielokrotnemu skanowaniu
-
+    if (isScanning) return;
     isScanning = true;
 
-    // Wykryj kolory z bieżącego obrazu
-    const grayValues = scanColors();
-    const kociembaLetters = grayValues.map(row => row.map(mapToKociembaLetter));
-
-    // Określ, która ściana została zeskanowana (na podstawie środkowego kafelka)
-    const centerLetter = kociembaLetters[1][1]; // Środkowy kafelek
-    if (!kociembaOrder.includes(centerLetter)) {
+    const colors = scanColors();
+    const centerColor = colors[1][1];
+    if (!kociembaOrder.includes(centerColor)) {
         colorOutput.innerHTML = `<h2>Błąd:</h2><p>Nie rozpoznano koloru środkowego kafelka.</p>`;
         isScanning = false;
         return;
     }
-
-    results[centerLetter] = kociembaLetters;
-
-    // Zmniejsz liczbę pozostałych skanów
+    results[centerColor] = colors;
     remainingScans--;
     instruction.textContent = `Pozostało do zeskanowania: ${remainingScans} ścian.`;
-
-    // Zaktualizuj listę zeskanowanych ścian
-    updateScannedFaces();
-
-    // Sprawdź, czy wszystkie ściany zostały zeskanowane
-    if (remainingScans === 0) {
-        try {
-            // Generowanie wyniku dla algorytmu Kociemby
-            const resultString = generateKociembaString(results);
-            colorOutput.innerHTML += `<h2>Wynik dla algorytmu Kociemby:</h2><pre>${resultString}</pre>`;
-
-            // Ukryj kamerę i siatkę
-            video.style.display = "none";
-            canvas.style.display = "none";
-            scanButton.style.display = "none";
-            instruction.textContent = "Wszystkie ściany zeskanowane!";
-        } catch (error) {
-            colorOutput.innerHTML = `<h2>Błąd:</h2><pre>${error.message}</pre>`;
-        }
-    }
-
     isScanning = false;
 });
 
 // Inicjalizacja
 startCamera();
 render();
-instruction.textContent = `Pozostało do zeskanowania: ${remainingScans} ścian.`;
