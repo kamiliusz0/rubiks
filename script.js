@@ -94,37 +94,27 @@ function getAverageColor(imageData) {
     ];
 }
 
-// Mapowanie kolorów na litery zgodnie z algorytmem Kociemby
+// Mapowanie kolorów na litery zgodnie z algorytmem Kociemby (zwiększona tolerancja)
 function mapToKociembaLetter(color) {
     const rubikColors = {
-        "czerwony": "F",
-        "zielony": "R",
-        "niebieski": "L",
-        "pomarańczowy": "B",
-        "żółty": "U",
-        "biały": "D"
+        "czerwony": { letter: "F", rgb: [255, 0, 0], tolerance: 100 },
+        "zielony": { letter: "R", rgb: [0, 255, 0], tolerance: 100 },
+        "niebieski": { letter: "L", rgb: [0, 0, 255], tolerance: 100 },
+        "pomarańczowy": { letter: "B", rgb: [255, 165, 0], tolerance: 150 },
+        "żółty": { letter: "U", rgb: [255, 255, 0], tolerance: 150 },
+        "biały": { letter: "D", rgb: [255, 255, 255], tolerance: 100 }
     };
-    let minDistance = Infinity;
-    let matchedLetter = "?";
-    for (const [name, rgb] of Object.entries({
-        "czerwony": [255, 0, 0],
-        "zielony": [0, 255, 0],
-        "niebieski": [0, 0, 255],
-        "pomarańczowy": [255, 150, 0],
-        "żółty": [255, 255, 0],
-        "biały": [255, 255, 255]
-    })) {
+    for (const [name, data] of Object.entries(rubikColors)) {
         const distance = Math.sqrt(
-            Math.pow(color[0] - rgb[0], 2) +
-            Math.pow(color[1] - rgb[1], 2) +
-            Math.pow(color[2] - rgb[2], 2)
+            Math.pow(color[0] - data.rgb[0], 2) +
+            Math.pow(color[1] - data.rgb[1], 2) +
+            Math.pow(color[2] - data.rgb[2], 2)
         );
-        if (distance < minDistance) {
-            minDistance = distance;
-            matchedLetter = rubikColors[name];
+        if (distance <= data.tolerance) {
+            return data.letter;
         }
     }
-    return matchedLetter;
+    return "?"; // Nieznany kolor
 }
 
 // Generowanie wyniku dla algorytmu Kociemby
@@ -141,6 +131,12 @@ function generateKociembaString(results) {
         }
     }
     return kociembaString;
+}
+
+// Wyświetlanie zeskanowanych ścian
+function updateScannedFaces() {
+    const scannedFaces = Object.keys(results).map(face => faceLetters[face]).join(', ');
+    colorOutput.innerHTML = `<h2>Zeskanowane ściany:</h2><p>${scannedFaces}</p>`;
 }
 
 // Główna pętla renderowania
@@ -170,18 +166,27 @@ scanButton.addEventListener('click', () => {
 
     // Określ, która ściana została zeskanowana (na podstawie środkowego kafelka)
     const centerLetter = kociembaLetters[1][1]; // Środkowy kafelek
+    if (!kociembaOrder.includes(centerLetter)) {
+        colorOutput.innerHTML = `<h2>Błąd:</h2><p>Nie rozpoznano koloru środkowego kafelka.</p>`;
+        isScanning = false;
+        return;
+    }
+
     results[centerLetter] = kociembaLetters;
 
     // Zmniejsz liczbę pozostałych skanów
     remainingScans--;
     instruction.textContent = `Pozostało do zeskanowania: ${remainingScans} ścian.`;
 
+    // Zaktualizuj listę zeskanowanych ścian
+    updateScannedFaces();
+
     // Sprawdź, czy wszystkie ściany zostały zeskanowane
     if (remainingScans === 0) {
         try {
             // Generowanie wyniku dla algorytmu Kociemby
             const resultString = generateKociembaString(results);
-            colorOutput.innerHTML = `<h2>Wynik dla algorytmu Kociemby:</h2><pre>${resultString}</pre>`;
+            colorOutput.innerHTML += `<h2>Wynik dla algorytmu Kociemby:</h2><pre>${resultString}</pre>`;
 
             // Ukryj kamerę i siatkę
             video.style.display = "none";
