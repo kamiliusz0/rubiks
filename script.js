@@ -17,14 +17,14 @@ const ctx = canvas.getContext('2d');
 canvas.width = width;
 canvas.height = height;
 
-// Kolejność skanowania ścian
+// Kolejność skanowania ścian zgodnie z Kociembą
 const faces = [
-    { name: "czerwony", color: "red", center: [255, 0, 0] },
-    { name: "zielony", color: "green", center: [0, 255, 0] },
-    { name: "niebieski", color: "blue", center: [0, 0, 255] },
-    { name: "pomarańczowy", color: "orange", center: [255, 165, 0] },
-    { name: "żółty", color: "yellow", center: [255, 255, 0] },
-    { name: "biały", color: "white", center: [255, 255, 255] }
+    { name: "U", color: "żółty", center: [255, 255, 0] },    // Żółty (Up)
+    { name: "R", color: "zielony", center: [0, 255, 0] },   // Zielony (Right)
+    { name: "F", color: "czerwony", center: [255, 0, 0] },  // Czerwony (Front)
+    { name: "D", color: "biały", center: [255, 255, 255] }, // Biały (Down)
+    { name: "L", color: "niebieski", center: [0, 0, 255] }, // Niebieski (Left)
+    { name: "B", color: "pomarańczowy", center: [255, 165, 0] } // Pomarańczowy (Back)
 ];
 
 let currentFaceIndex = 0;
@@ -60,41 +60,16 @@ function drawGrid() {
     }
 }
 
-// Wykrywanie kolorów w siatce
-function scanColors() {
-    const colors = [];
-    for (let y = 0; y < gridSize; y++) {
-        const row = [];
-        for (let x = 0; x < gridSize; x++) {
-            const startX = margin + x * cellSize;
-            const startY = margin + y * cellSize;
-            const imageData = ctx.getImageData(startX, startY, cellSize, cellSize).data;
-            const avgColor = getAverageColor(imageData);
-            row.push(avgColor);
-        }
-        colors.push(row);
-    }
-    return colors;
-}
-
-// Obliczanie średniego koloru
-function getAverageColor(imageData) {
-    let r = 0, g = 0, b = 0;
-    for (let i = 0; i < imageData.length; i += 4) {
-        r += imageData[i];
-        g += imageData[i + 1];
-        b += imageData[i + 2];
-    }
-    const count = imageData.length / 4;
-    return [
-        Math.round(r / count),
-        Math.round(g / count),
-        Math.round(b / count)
-    ];
+// Skanowanie tylko centrum każdej ściany
+function scanCenter() {
+    const centerX = Math.floor(width / 2);
+    const centerY = Math.floor(height / 2);
+    const imageData = ctx.getImageData(centerX, centerY, 1, 1).data; // Pobierz 1 piksel z centrum
+    return [imageData[0], imageData[1], imageData[2]]; // Zwróć kolor RGB
 }
 
 // Mapowanie kolorów na nazwy
-function mapToRubikColors(color) {
+function mapToRubikColor(color) {
     const rubikColors = {
         "czerwony": [255, 0, 0],
         "zielony": [0, 255, 0],
@@ -121,15 +96,11 @@ function mapToRubikColors(color) {
 
 // Generowanie ciągu dla algorytmu Kociemby
 function generateKociembaString(results) {
-    const order = ["czerwony", "zielony", "niebieski", "pomarańczowy", "żółty", "biały"];
+    const order = ["U", "R", "F", "D", "L", "B"];
     let kociembaString = "";
     for (const face of order) {
-        const colors = results[face];
-        for (let y = 0; y < gridSize; y++) {
-            for (let x = 0; x < gridSize; x++) {
-                kociembaString += colors[y][x][0]; // Pierwsza litera koloru
-            }
-        }
+        const color = results[face];
+        kociembaString += color[0]; // Pierwsza litera koloru
     }
     return kociembaString;
 }
@@ -155,15 +126,14 @@ scanButton.addEventListener('click', () => {
 
     isScanning = true;
 
-    // Wykryj kolory z bieżącego obrazu
-    const colors = scanColors();
-    const rubikColors = colors.map(row => row.map(mapToRubikColors));
+    // Wykryj kolor centrum
+    const centerColor = scanCenter();
+    const rubikColor = mapToRubikColor(centerColor);
     const currentFace = faces[currentFaceIndex];
-    results[currentFace.name] = rubikColors;
+    results[currentFace.name] = rubikColor;
 
     // Wyświetl wyniki
-    colorOutput.innerHTML = `<h2>Wykryte kolory (${currentFace.name}):</h2>` +
-        rubikColors.map(row => row.join(', ')).join('<br>');
+    colorOutput.innerHTML = `<h2>Wykryty kolor (${currentFace.name}): ${rubikColor}</h2>`;
 
     // Przejdź do następnej ściany
     currentFaceIndex++;
@@ -176,6 +146,10 @@ scanButton.addEventListener('click', () => {
         // Generowanie wyniku dla algorytmu Kociemby
         const resultString = generateKociembaString(results);
         colorOutput.innerHTML += `<h2>Wynik dla algorytmu Kociemby:</h2><pre>${resultString}</pre>`;
+
+        // Wyłącz kamerę
+        video.srcObject.getTracks().forEach(track => track.stop());
+        video.style.display = "none";
     }
 
     isScanning = false;
