@@ -17,18 +17,19 @@ const ctx = canvas.getContext('2d');
 canvas.width = width;
 canvas.height = height;
 
-// Kolejność skanowania ścian
-const faces = [
-    { name: "czerwony", color: "red", letter: "F" },
-    { name: "zielony", color: "green", letter: "R" },
-    { name: "niebieski", color: "blue", letter: "L" },
-    { name: "pomarańczowy", color: "orange", letter: "B" },
-    { name: "żółty", color: "yellow", letter: "U" },
-    { name: "biały", color: "white", letter: "D" }
-];
+// Kolejność ścian zgodnie z algorytmem Kociemby
+const kociembaOrder = ["U", "R", "F", "D", "L", "B"];
+const faceLetters = {
+    "U": "żółty",
+    "R": "zielony",
+    "F": "czerwony",
+    "D": "biały",
+    "L": "niebieski",
+    "B": "pomarańczowy"
+};
 
-let currentFaceIndex = 0;
-let results = {};
+let remainingScans = 6; // Liczba pozostałych ścian do zeskanowania
+let results = {}; // Wyniki skanowania
 let isScanning = false;
 
 // Uruchomienie kamery (głównej)
@@ -109,7 +110,7 @@ function mapToKociembaLetter(color) {
         "czerwony": [255, 0, 0],
         "zielony": [0, 255, 0],
         "niebieski": [0, 0, 255],
-        "pomarańczowy": [255, 150, 0],
+        "pomarańczowy": [255, 165, 0],
         "żółty": [255, 255, 0],
         "biały": [255, 255, 255]
     })) {
@@ -128,13 +129,14 @@ function mapToKociembaLetter(color) {
 
 // Generowanie wyniku dla algorytmu Kociemby
 function generateKociembaString(results) {
-    const order = ["U", "R", "F", "D", "L", "B"]; // Kolejność ścian w algorytmie Kociemby
     let kociembaString = "";
-    for (const face of order) {
-        const colors = results[face];
+    for (const face of kociembaOrder) {
+        if (!results[face]) {
+            throw new Error(`Brak zeskanowanej ściany: ${faceLetters[face]}`);
+        }
         for (let y = 0; y < gridSize; y++) {
             for (let x = 0; x < gridSize; x++) {
-                kociembaString += colors[y][x];
+                kociembaString += results[face][y][x];
             }
         }
     }
@@ -165,28 +167,30 @@ scanButton.addEventListener('click', () => {
     // Wykryj kolory z bieżącego obrazu
     const colors = scanColors();
     const kociembaLetters = colors.map(row => row.map(mapToKociembaLetter));
-    const currentFace = faces[currentFaceIndex];
-    results[currentFace.letter] = kociembaLetters;
 
-    // Wyświetl wyniki
-    colorOutput.innerHTML = `<h2>Wykryte kolory (${currentFace.name}):</h2>` +
-        kociembaLetters.map(row => row.join(' ')).join('<br>');
+    // Określ, która ściana została zeskanowana (na podstawie środkowego kafelka)
+    const centerLetter = kociembaLetters[1][1]; // Środkowy kafelek
+    results[centerLetter] = kociembaLetters;
 
-    // Przejdź do następnej ściany
-    currentFaceIndex++;
-    if (currentFaceIndex < faces.length) {
-        instruction.textContent = `Skanuj ścianę ${faces[currentFaceIndex].name}.`;
-    } else {
-        instruction.textContent = "Wszystkie ściany zeskanowane!";
-        scanButton.disabled = true;
+    // Zmniejsz liczbę pozostałych skanów
+    remainingScans--;
+    instruction.textContent = `Pozostało do zeskanowania: ${remainingScans} ścian.`;
 
-        // Generowanie wyniku dla algorytmu Kociemby
-        const resultString = generateKociembaString(results);
-        colorOutput.innerHTML = `<h2>Wynik dla algorytmu Kociemby:</h2><pre>${resultString}</pre>`;
+    // Sprawdź, czy wszystkie ściany zostały zeskanowane
+    if (remainingScans === 0) {
+        try {
+            // Generowanie wyniku dla algorytmu Kociemby
+            const resultString = generateKociembaString(results);
+            colorOutput.innerHTML = `<h2>Wynik dla algorytmu Kociemby:</h2><pre>${resultString}</pre>`;
 
-        // Ukryj kamerę i siatkę
-        video.style.display = "none";
-        canvas.style.display = "none";
+            // Ukryj kamerę i siatkę
+            video.style.display = "none";
+            canvas.style.display = "none";
+            scanButton.style.display = "none";
+            instruction.textContent = "Wszystkie ściany zeskanowane!";
+        } catch (error) {
+            colorOutput.innerHTML = `<h2>Błąd:</h2><pre>${error.message}</pre>`;
+        }
     }
 
     isScanning = false;
@@ -195,3 +199,4 @@ scanButton.addEventListener('click', () => {
 // Inicjalizacja
 startCamera();
 render();
+instruction.textContent = `Pozostało do zeskanowania: ${remainingScans} ścian.`;
