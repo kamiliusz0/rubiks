@@ -316,7 +316,7 @@ scanButton.addEventListener('click', async () => {
    11. API KOMUNIKACJA BACKEND
    ================================================ */
 // Endpoint API (zmień na swój URL backendu)
-const backendUrl = "https://rubik-cube-backend.onrender.com/solve";
+const backendUrl = "https://rubik-cube-backend-zh6g.onrender.com";
 
 // Funkcja do wysyłania cubeState do backendu
 async function solveCube(cubeState) {
