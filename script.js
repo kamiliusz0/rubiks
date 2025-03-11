@@ -20,10 +20,10 @@ canvas.height = height;
 // Kolejność skanowania ścian zgodnie z Kociembą
 const faces = [
     { name: "U", color: "żółty", center: [255, 255, 0] },    // Żółty (Up)
-    { name: "R", color: "zielony", center: [0, 255, 0] },   // Zielony (Right)
-    { name: "F", color: "czerwony", center: [255, 0, 0] },  // Czerwony (Front)
-    { name: "D", color: "biały", center: [255, 255, 255] }, // Biały (Down)
-    { name: "L", color: "niebieski", center: [0, 0, 255] }, // Niebieski (Left)
+    { name: "R", color: "zielony", center: [0, 255, 0] },    // Zielony (Right)
+    { name: "F", color: "czerwony", center: [255, 0, 0] },   // Czerwony (Front)
+    { name: "D", color: "biały", center: [255, 255, 255] },  // Biały (Down)
+    { name: "L", color: "niebieski", center: [0, 0, 255] },  // Niebieski (Left)
     { name: "B", color: "pomarańczowy", center: [255, 165, 0] } // Pomarańczowy (Back)
 ];
 
@@ -60,12 +60,21 @@ function drawGrid() {
     }
 }
 
-// Skanowanie tylko centrum każdej ściany
-function scanCenter() {
-    const centerX = Math.floor(width / 2);
-    const centerY = Math.floor(height / 2);
-    const imageData = ctx.getImageData(centerX, centerY, 1, 1).data; // Pobierz 1 piksel z centrum
-    return [imageData[0], imageData[1], imageData[2]]; // Zwróć kolor RGB
+// Skanowanie wszystkich pól na ścianie
+function scanFace() {
+    const colors = [];
+    for (let y = 0; y < gridSize; y++) {
+        const row = [];
+        for (let x = 0; x < gridSize; x++) {
+            const startX = margin + x * cellSize + cellSize / 2;
+            const startY = margin + y * cellSize + cellSize / 2;
+            const imageData = ctx.getImageData(startX, startY, 1, 1).data; // Pobierz 1 piksel z centrum pola
+            const color = mapToRubikColor([imageData[0], imageData[1], imageData[2]]);
+            row.push(color);
+        }
+        colors.push(row);
+    }
+    return colors;
 }
 
 // Mapowanie kolorów na nazwy
@@ -91,16 +100,20 @@ function mapToRubikColor(color) {
             matchedColor = name;
         }
     }
-    return matchedColor;
+    return matchedColor[0].toUpperCase(); // Zwróć pierwszą literę koloru (np. "C" dla czerwonego)
 }
 
 // Generowanie ciągu dla algorytmu Kociemby
 function generateKociembaString(results) {
-    const order = ["U", "R", "F", "D", "L", "B"];
+    const order = ["U", "R", "F", "D", "L", "B"]; // Kolejność ścian
     let kociembaString = "";
     for (const face of order) {
-        const color = results[face];
-        kociembaString += color[0]; // Pierwsza litera koloru
+        const colors = results[face];
+        for (let y = 0; y < gridSize; y++) {
+            for (let x = 0; x < gridSize; x++) {
+                kociembaString += colors[y][x]; // Dodaj kolor pola
+            }
+        }
     }
     return kociembaString;
 }
@@ -126,14 +139,14 @@ scanButton.addEventListener('click', () => {
 
     isScanning = true;
 
-    // Wykryj kolor centrum
-    const centerColor = scanCenter();
-    const rubikColor = mapToRubikColor(centerColor);
+    // Wykryj kolory na bieżącej ścianie
+    const colors = scanFace();
     const currentFace = faces[currentFaceIndex];
-    results[currentFace.name] = rubikColor;
+    results[currentFace.name] = colors;
 
     // Wyświetl wyniki
-    colorOutput.innerHTML = `<h2>Wykryty kolor (${currentFace.name}): ${rubikColor}</h2>`;
+    colorOutput.innerHTML = `<h2>Wykryte kolory (${currentFace.name}):</h2>` +
+        colors.map(row => row.join(' ')).join('<br>');
 
     // Przejdź do następnej ściany
     currentFaceIndex++;
