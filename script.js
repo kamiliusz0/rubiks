@@ -1,3 +1,5 @@
+// Endpoint API (zmień na swój URL backendu)
+const backendUrl = "https://rubik-cube-backend.onrender.com/solve";
 // Elementy DOM
 const video = document.getElementById('camera');
 const canvas = document.getElementById('grid');
@@ -256,18 +258,17 @@ function render() {
 /* ================================================
    9. OBSŁUGA PRZYCISKU "SKANUJ"
    ================================================ */
-scanButton.addEventListener('click', () => {
-  if (isScanning) return; // Zapobiegaj wielokrotnemu skanowaniu
+scanButton.addEventListener('click', async () => {
+  if (isScanning) return;
 
   isScanning = true;
 
   // Wykryj kolory z bieżącego obrazu
   const hslValues = scanColors();
-  // Zamień każdy HSL na literę algorytmu Kociemby
   const kociembaLetters = hslValues.map(row => row.map(mapToKociembaLetter));
 
-  // Określ, która ściana została zeskanowana (na podstawie środkowego kafelka)
-  const centerLetter = kociembaLetters[1][1]; // Środkowy kafelek
+  // Określ, która ściana została zeskanowana
+  const centerLetter = kociembaLetters[1][1];
   if (!kociembaOrder.includes(centerLetter)) {
     colorOutput.innerHTML = `<h2>Błąd:</h2><p>Nie rozpoznano koloru środkowego kafelka.</p>`;
     isScanning = false;
@@ -276,12 +277,8 @@ scanButton.addEventListener('click', () => {
 
   // Zapisz wyniki dla tej ściany
   results[centerLetter] = kociembaLetters;
-
-  // Zmniejsz liczbę pozostałych skanów
   remainingScans--;
   instruction.textContent = `Pozostało do zeskanowania: ${remainingScans} ścian.`;
-
-  // Zaktualizuj listę zeskanowanych ścian
   updateScannedFaces();
 
   // Sprawdź, czy wszystkie ściany zostały zeskanowane
@@ -292,6 +289,14 @@ scanButton.addEventListener('click', () => {
       colorOutput.innerHTML += `
         <h2>Wynik dla algorytmu Kociemby:</h2>
         <pre>${resultString}</pre>`;
+
+      // Wyślij wynik do backendu i uzyskaj rozwiązanie
+      const solutionResponse = await solveCube(resultString);
+      if (solutionResponse.error) {
+        colorOutput.innerHTML += `<h2>Błąd:</h2><pre>${solutionResponse.error}</pre>`;
+      } else {
+        colorOutput.innerHTML += `<h2>Rozwiązanie:</h2><pre>${solutionResponse.solution}</pre>`;
+      }
 
       // Ukryj kamerę i siatkę
       video.style.display = "none";
@@ -313,3 +318,26 @@ scanButton.addEventListener('click', () => {
 startCamera();
 render();
 instruction.textContent = `Pozostało do zeskanowania: ${remainingScans} ścian.`;
+
+// Funkcja do wysyłania cubeState do backendu
+async function solveCube(cubeState) {
+  try {
+    const response = await fetch(backendUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ cubeState: cubeState }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Błąd HTTP: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error("Błąd podczas wysyłania żądania:", error);
+    return { error: error.message };
+  }
+}
