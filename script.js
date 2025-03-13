@@ -42,12 +42,12 @@ const faceLetters = {
   - Niebieski (L): (204.5, 93.9, 39.8)
 */
 const referenceColors = [
-  { letter: 'D', name: 'biały',         hsl: [ 94.9,  1.4, 66.0 ] },
-  { letter: 'B', name: 'pomarańczowy', hsl: [ 23.4, 98.4, 43.5 ] },
-  { letter: 'R', name: 'zielony',      hsl: [121.8, 66.8, 47.4 ] },
-  { letter: 'F', name: 'czerwony',     hsl: [357.9, 78.9, 43.8 ] },
-  { letter: 'U', name: 'żółty',        hsl: [ 55.2,100.0, 40.1 ] },
-  { letter: 'L', name: 'niebieski',    hsl: [204.5, 93.9, 39.8 ] }
+  { letter: 'D', name: 'biały',         hsl: [ 343.3,  0.9, 59.2 ] },
+  { letter: 'B', name: 'pomarańczowy', hsl: [ 15.0, 85.5, 64.3 ] },
+  { letter: 'R', name: 'zielony',      hsl: [132.2, 36.4, 49.9 ] },
+  { letter: 'F', name: 'czerwony',     hsl: [353.0, 100.0, 67.1 ] },
+  { letter: 'U', name: 'żółty',        hsl: [ 53.1,33.8., 50.0 ] },
+  { letter: 'L', name: 'niebieski',    hsl: [206.7, 73.5, 53.9 ] }
 ];
 
 let remainingScans = 6; // Liczba pozostałych ścian do zeskanowania
