@@ -341,3 +341,38 @@ async function solveCube(cubeState) {
     return { error: error.message };
   }
 }
+// Dodaj na końcu pliku
+function checkESPStatus() {
+    fetch('/esp-status')
+        .then(response => response.json())
+        .then(data => {
+            if(data.solution) {
+                const statusDiv = document.getElementById('esp32-status') || createStatusDiv();
+                statusDiv.innerHTML = `
+                    <h3>Status ESP32:</h3>
+                    <p>${data.status}</p>
+                    <p>Ostatnie rozwiązanie: <strong>${data.solution}</strong></p>
+                `;
+            }
+        });
+}
+
+function createStatusDiv() {
+    const div = document.createElement('div');
+    div.id = 'esp32-status';
+    div.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        z-index: 1000;
+    `;
+    document.body.appendChild(div);
+    return div;
+}
+
+// Sprawdzaj co 3 sekundy
+setInterval(checkESPStatus, 3000);
