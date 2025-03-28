@@ -40,14 +40,22 @@ const faceLetters = {
   - Czerwony (F): (357.9, 78.9, 43.8)
   - Żółty (U): (55.2, 100.0, 40.1)
   - Niebieski (L): (204.5, 93.9, 39.8)
-*/
-const referenceColors = [
+
+  swiatlo dzienne
   { letter: 'D', name: 'biały',         hsl: [ 215.9, 21.3, 65.9 ] },//
   { letter: 'B', name: 'pomarańczowy', hsl: [ 19.7, 95.0, 42.4 ] },//
   { letter: 'R', name: 'zielony',      hsl: [122.0, 70.1, 37.4 ] },
   { letter: 'F', name: 'czerwony',     hsl: [353.1, 89.6, 33.5 ] },//
   { letter: 'U', name: 'żółty',        hsl: [62.3, 85.6, 40.3 ] }, //
   { letter: 'L', name: 'niebieski',    hsl: [208, 100.0, 31.4 ] }//
+*/
+const referenceColors = [
+  { letter: 'D', name: 'biały',         hsl: [ 36.0, 15.4, 72.3 ] },
+  { letter: 'B', name: 'pomarańczowy', hsl: [ 20.4, 100.0, 44.0 ] },
+  { letter: 'R', name: 'zielony',      hsl: [125.8, 58.5, 47.2 ] },
+  { letter: 'F', name: 'czerwony',     hsl: [0.6, 70.9, 46.7 ] },
+  { letter: 'U', name: 'żółty',        hsl: [52.2, 91.7, 42.8 ] }, 
+  { letter: 'L', name: 'niebieski',    hsl: [204.1, 68.5, 33.1 ] }
 ];
 
 let remainingScans = 6; // Liczba pozostałych ścian do zeskanowania
