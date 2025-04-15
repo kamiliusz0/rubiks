@@ -277,11 +277,26 @@ scanButton.addEventListener('click', async () => {
 });
 
 calibrateButton.addEventListener('click', () => {
-  const detectedWhite = getColorFromCenterField();
-  correctionVector = getCorrectionVector(detectedWhite);
-  correctedReferenceColors = applyWhiteBalanceCorrection(referenceColors, correctionVector);
-  calibrateButton.style.display = 'none';
-  alert("Kalibracja kolorów zakończona!");
+  try {
+    if(video.paused || video.readyState < HTMLMediaElement.HAVE_METADATA) {
+      throw new Error("Kamera nie jest gotowa");
+    }
+    
+    const detectedWhite = getColorFromCenterField();
+    console.log("Wykryty biały:", detectedWhite);
+    
+    correctionVector = getCorrectionVector(detectedWhite);
+    correctedReferenceColors = applyWhiteBalanceCorrection(referenceColors, correctionVector);
+    
+    // Zastąp alert komunikatem w interfejsie
+    instruction.textContent = "Kalibracja udana! Możesz skanować.";
+    setTimeout(() => instruction.textContent = "", 3000);
+    
+  } catch (error) {
+    console.error("Błąd kalibracji:", error);
+    instruction.textContent = `Błąd kalibracji: ${error.message}`;
+    setTimeout(() => instruction.textContent = "", 5000);
+  }
 });
 
 // Inicjalizacja
