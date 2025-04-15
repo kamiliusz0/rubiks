@@ -159,11 +159,7 @@ function scanColors() {
       const avgG = totalG / numPixels;
       const avgB = totalB / numPixels;
       
-      const correctedR = clamp(avgR * correctionVector.r, 0, 255);
-      const correctedG = clamp(avgG * correctionVector.g, 0, 255);
-      const correctedB = clamp(avgB * correctionVector.b, 0, 255);
-      
-      const hsl = rgbToHsl(correctedR, correctedG, correctedB);
+      const hsl = rgbToHsl(avgR, avgG, avgB);
       row.push(hsl);
     }
     colors.push(row);
