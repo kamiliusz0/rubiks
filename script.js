@@ -301,12 +301,9 @@ calibrateButton.addEventListener('click', () => {
     
     const detectedWhite = getColorFromCenterField();
     console.log("Wykryty biały:", detectedWhite);
-    
-    correctionVector = getCorrectionVector({
-      h: detectedWhite[0],
-      s: detectedWhite[1],
-      l: detectedWhite[2]
-    });
+
+    const [h, s, l] = detectedWhite;
+    correctionVector = getCorrectionVector({h, s, l});
     correctedReferenceColors = applyWhiteBalanceCorrection(referenceColors, correctionVector);
     
     isCalibrated = true;
