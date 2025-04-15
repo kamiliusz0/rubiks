@@ -34,14 +34,24 @@ const faceLetters = {
   "B": "pomarańczowy"
 };
 
-// Początkowe kolory referencyjne
+//stare
+// const referenceColors = [
+//   { letter: 'D', name: 'biały',         hsl: [ 36.0, 15.4, 72.3 ] },
+//   { letter: 'B', name: 'pomarańczowy', hsl: [ 20.4, 100.0, 44.0 ] },
+//   { letter: 'R', name: 'zielony',      hsl: [125.8, 58.5, 47.2 ] },
+//   { letter: 'F', name: 'czerwony',     hsl: [0.6, 70.9, 46.7 ] },
+//   { letter: 'U', name: 'żółty',        hsl: [52.2, 91.7, 42.8 ] }, 
+//   { letter: 'L', name: 'niebieski',    hsl: [204.1, 68.5, 33.1 ] }
+// ];
+
+//Nowe kolory referencyjne
 const referenceColors = [
-  { letter: 'D', name: 'biały',         hsl: [ 36.0, 15.4, 72.3 ] },
-  { letter: 'B', name: 'pomarańczowy', hsl: [ 20.4, 100.0, 44.0 ] },
-  { letter: 'R', name: 'zielony',      hsl: [125.8, 58.5, 47.2 ] },
-  { letter: 'F', name: 'czerwony',     hsl: [0.6, 70.9, 46.7 ] },
-  { letter: 'U', name: 'żółty',        hsl: [52.2, 91.7, 42.8 ] }, 
-  { letter: 'L', name: 'niebieski',    hsl: [204.1, 68.5, 33.1 ] }
+  { letter: 'D', name: 'biały',         hsl: [0, 0, 100] },
+  { letter: 'B', name: 'pomarańczowy', hsl: [30, 100.0, 50] },
+  { letter: 'R', name: 'zielony',      hsl: [120, 100, 50] },
+  { letter: 'F', name: 'czerwony',     hsl: [0, 100, 50] },
+  { letter: 'U', name: 'żółty',        hsl: [60, 100, 50] }, 
+  { letter: 'L', name: 'niebieski',    hsl: [240, 100, 50] }
 ];
 
 let correctedReferenceColors = [...referenceColors];
