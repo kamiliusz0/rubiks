@@ -54,8 +54,8 @@ const referenceColors = [
   { letter: 'L', name: 'niebieski',    hsl: [240, 100, 50] }
 ];
 
-let correctedReferenceColors = [...referenceColors];
-let correctionVector = { r: 1, g: 1, b: 1 };
+let correctedReferenceColors = null;
+let correctionVector = { h: 1, s: 1, l: 1 };
 let remainingScans = 6;
 let results = {};
 let isScanning = false;
@@ -79,18 +79,18 @@ function getColorFromCenterField() {
     totalG += imageData[i + 1];
     totalB += imageData[i + 2];
   }
-  return {
-    r: totalR / numPixels,
-    g: totalG / numPixels,
-    b: totalB / numPixels
-  };
+  const avgR = totalR / numPixels;
+  const avgG = totalG / numPixels;
+  const avgB = totalB / numPixels;
+  
+  return rgbToHsl(avgR, avgG, avgB);
 }
 
-function getCorrectionVector(detectedWhite, expectedWhite = { r: 255, g: 255, b: 255 }) {
+function getCorrectionVector(detectedWhite, expectedWhite = { h: 0, s: 0, l: 100 }) {
   return {
-    r: expectedWhite.r / detectedWhite.r,
-    g: expectedWhite.g / detectedWhite.g,
-    b: expectedWhite.b / detectedWhite.b
+    h: expectedWhite.h / detectedWhite.h,
+    s: expectedWhite.s / detectedWhite.s,
+    l: expectedWhite.l / detectedWhite.l
   };
 }
 
@@ -98,7 +98,11 @@ function applyWhiteBalanceCorrection(referenceColors, correctionVector) {
   return referenceColors.map(color => ({
     letter: color.letter,
     name: color.name,
-    hsl: color.hsl
+    hsl: [
+      clamp(color.hsl[0] * correctionVector.h, 0, 360),
+      clamp(color.hsl[1] * correctionVector.s, 0, 100),
+      clamp(color.hsl[2] * correctionVector.l, 0, 100)
+      ]
   }));
 }
 
