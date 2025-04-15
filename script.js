@@ -349,3 +349,58 @@ async function solveCube(cubeState) {
     return { error: error.message };
   }
 }
+
+
+// Funkcja clamp
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+// Funkcja do pobierania koloru ze środka canvasu
+function getColorFromCenterField() {
+  const sampleSize = 10;
+  const startX = width / 2 - sampleSize / 2;
+  const startY = height / 2 - sampleSize / 2;
+  const imageData = ctx.getImageData(startX, startY, sampleSize, sampleSize).data;
+
+  let totalR = 0, totalG = 0, totalB = 0;
+  const numPixels = sampleSize * sampleSize;
+  for (let i = 0; i < imageData.length; i += 4) {
+    totalR += imageData[i];
+    totalG += imageData[i + 1];
+    totalB += imageData[i + 2];
+  }
+  return {
+    r: totalR / numPixels,
+    g: totalG / numPixels,
+    b: totalB / numPixels
+  };
+}
+
+// Funkcja obliczająca wektor korekcji balansu bieli
+function getCorrectionVector(detectedWhite, expectedWhite = { r: 255, g: 255, b: 255 }) {
+  return {
+    r: expectedWhite.r / detectedWhite.r,
+    g: expectedWhite.g / detectedWhite.g,
+    b: expectedWhite.b / detectedWhite.b
+  };
+}
+
+// Funkcja korygująca referencyjne kolory
+function applyWhiteBalanceCorrection(referenceColors, correctionVector) {
+  return referenceColors.map(color => ({
+    letter: color.letter,
+    name: color.name,
+    hsl: color.hsl // Pozostawiamy HSL niezmienione, bo RGB używasz tylko w pobraniu bieli
+  }));
+}
+
+// Obsługa przycisku kalibracji
+const calibrateButton = document.getElementById('calibrateButton');
+calibrateButton.addEventListener('click', () => {
+  const detectedWhite = getColorFromCenterField();
+  const correctionVector = getCorrectionVector(detectedWhite);
+  correctedReferenceColors = applyWhiteBalanceCorrection(referenceColors, correctionVector);
+  alert("Kalibracja kolorów zakończona!");
+});
+
