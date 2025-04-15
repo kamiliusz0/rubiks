@@ -88,9 +88,9 @@ function getColorFromCenterField() {
 
 function getCorrectionVector(detectedWhite, expectedWhite = { h: 0, s: 0, l: 100 }) {
   return {
-    h: expectedWhite.h / detectedWhite.h,
-    s: expectedWhite.s / detectedWhite.s,
-    l: expectedWhite.l / detectedWhite.l
+    hShift: expectedWhite.h - detectedWhite.h,  // PRZESUNIĘCIE
+    sFactor: expectedWhite.s / Math.max(detectedWhite.s, 1), // SKALOWANIE
+    lFactor: expectedWhite.l / Math.max(detectedWhite.l, 1)  // SKALOWANIE
   };
 }
 
@@ -99,10 +99,10 @@ function applyWhiteBalanceCorrection(referenceColors, correctionVector) {
     letter: color.letter,
     name: color.name,
     hsl: [
-      clamp(color.hsl[0] * correctionVector.h, 0, 360),
-      clamp(color.hsl[1] * correctionVector.s, 0, 100),
-      clamp(color.hsl[2] * correctionVector.l, 0, 100)
-      ]
+      (color.hsl[0] + correctionVector.hShift + 360) % 360, // Hue przesunięcie
+      clamp(color.hsl[1] * correctionVector.sFactor, 0, 100), // Saturation korekcja
+      clamp(color.hsl[2] * correctionVector.lFactor, 0, 100)  // Lightness korekcja
+    ]
   }));
 }
 
