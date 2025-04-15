@@ -296,19 +296,23 @@ calibrateButton.addEventListener('click', () => {
     correctedReferenceColors = applyWhiteBalanceCorrection(referenceColors, correctionVector);
     
     isCalibrated = true;
+    scanButton.style.display = 'inline-block';
     scanButton.disabled = false;
     instruction.textContent = "Kalibracja udana! Możesz skanować ściany.";
     setTimeout(() => instruction.textContent = "", 3000);
+    calibrateButton.style.display = 'none';
     
   } catch (error) {
     console.error("Błąd kalibracji:", error);
     instruction.textContent = `Błąd kalibracji: ${error.message}`;
     setTimeout(() => instruction.textContent = "", 5000);
+    calibrateButton.style.display = 'none';
   }
 });
 
 // Inicjalizacja
 scanButton.disabled = true;
+scanButton.style.display = 'none';
 startCamera();
 render();
 instruction.textContent = `Pozostało do zeskanowania: ${remainingScans} ścian.`;
