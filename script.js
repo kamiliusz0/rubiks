@@ -306,20 +306,24 @@ calibrateButton.addEventListener('click', () => {
     const detectedWhite = getColorFromCenterField();
     console.log("Wykryty biały:", detectedWhite);
     
-    correctionVector = getCorrectionVector(detectedWhite);
+    correctionVector = getCorrectionVector({
+      h: detectedWhite[0],
+      s: detectedWhite[1],
+      l: detectedWhite[2]
+    );
     correctedReferenceColors = applyWhiteBalanceCorrection(referenceColors, correctionVector);
     
     isCalibrated = true;
     scanButton.style.display = 'inline-block';
     scanButton.disabled = false;
     instruction.textContent = "Kalibracja udana! Możesz skanować ściany.";
-    setTimeout(() => instruction.textContent = "", 3000);
+    //setTimeout(() => instruction.textContent = "", 3000);
     calibrateButton.style.display = 'none';
     
   } catch (error) {
     console.error("Błąd kalibracji:", error);
     instruction.textContent = `Błąd kalibracji: ${error.message}`;
-    setTimeout(() => instruction.textContent = "", 5000);
+    //setTimeout(() => instruction.textContent = "", 5000);
     calibrateButton.style.display = 'none';
   }
 });
