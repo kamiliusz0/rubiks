@@ -109,7 +109,6 @@ function applyWhiteBalanceCorrection(referenceColors, correctionVector) {
 /* ================================================
    Funkcje główne
    ================================================ */
-
 async function startCamera() {
   try {
     const constraints = { video: { facingMode: "environment" } };
@@ -117,6 +116,7 @@ async function startCamera() {
     video.srcObject = stream;
   } catch (error) {
     console.error("Błąd dostępu do kamery:", error);
+    instruction.textContent = `Błąd dostępu do kamery: ${error.message}`;
   }
 }
 
