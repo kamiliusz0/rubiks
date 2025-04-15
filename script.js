@@ -49,6 +49,7 @@ let correctionVector = { r: 1, g: 1, b: 1 };
 let remainingScans = 6;
 let results = {};
 let isScanning = false;
+let isCalibrated = false;
 
 // Funkcje pomocnicze
 function clamp(value, min, max) {
@@ -232,6 +233,12 @@ function render() {
 }
 
 scanButton.addEventListener('click', async () => {
+   if (!isCalibrated) {
+    instruction.textContent = "Najpierw wykonaj kalibrację!";
+    setTimeout(() => instruction.textContent = "", 3000);
+    return;
+  }
+  
   if (isScanning) return;
   isScanning = true;
 
@@ -288,8 +295,9 @@ calibrateButton.addEventListener('click', () => {
     correctionVector = getCorrectionVector(detectedWhite);
     correctedReferenceColors = applyWhiteBalanceCorrection(referenceColors, correctionVector);
     
-    // Zastąp alert komunikatem w interfejsie
-    instruction.textContent = "Kalibracja udana! Możesz skanować.";
+    isCalibrated = true;
+    scanButton.disabled = false;
+    instruction.textContent = "Kalibracja udana! Możesz skanować ściany.";
     setTimeout(() => instruction.textContent = "", 3000);
     
   } catch (error) {
@@ -300,6 +308,7 @@ calibrateButton.addEventListener('click', () => {
 });
 
 // Inicjalizacja
+scanButton.disabled = true;
 startCamera();
 render();
 instruction.textContent = `Pozostało do zeskanowania: ${remainingScans} ścian.`;
