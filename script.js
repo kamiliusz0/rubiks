@@ -280,6 +280,7 @@ calibrateButton.addEventListener('click', () => {
   const detectedWhite = getColorFromCenterField();
   correctionVector = getCorrectionVector(detectedWhite);
   correctedReferenceColors = applyWhiteBalanceCorrection(referenceColors, correctionVector);
+  calibrateButton.style.display = 'none';
   alert("Kalibracja kolorów zakończona!");
 });
 
