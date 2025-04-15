@@ -306,7 +306,7 @@ calibrateButton.addEventListener('click', () => {
       h: detectedWhite[0],
       s: detectedWhite[1],
       l: detectedWhite[2]
-    );
+    });
     correctedReferenceColors = applyWhiteBalanceCorrection(referenceColors, correctionVector);
     
     isCalibrated = true;
