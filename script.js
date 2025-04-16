@@ -306,6 +306,8 @@ calibrateButton.addEventListener('click', () => {
     correctionVector = getCorrectionVector({h, s, l});
     correctedReferenceColors = applyWhiteBalanceCorrection(referenceColors, correctionVector);
     
+    console.log("Skorygowane kolory:", correctedReferenceColors);
+    
     isCalibrated = true;
     scanButton.style.display = 'inline-block';
     scanButton.disabled = false;
