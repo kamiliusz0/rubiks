@@ -89,7 +89,7 @@ function getColorFromCenterField() {
 function getCorrectionVector(detectedWhite, expectedWhite = { h: 0, s: 0, l: 100 }) {
   return {
     hShift: expectedWhite.h - detectedWhite.h,  // PRZESUNIĘCIE
-    sFactor: 1//expectedWhite.s / Math.max(detectedWhite.s, 1), // SKALOWANIE
+    sFactor: 1,//expectedWhite.s / Math.max(detectedWhite.s, 1), // SKALOWANIE
     lFactor: expectedWhite.l / Math.max(detectedWhite.l, 1)  // SKALOWANIE
   };
 }
